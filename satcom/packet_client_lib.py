@@ -8,10 +8,6 @@ import copy
 CLIENT_PACKET_ASM = [0x22, 0x69]
 CLIENT_PACKET_HEADER_LENGTH = 7
 
-### Create ClientPackerError Object ###
-
-class ClientPacketError
-
 ### Create ClientPacketHeader Object ###
 
 class ClientPacketHeader:
@@ -63,16 +59,16 @@ class ClientPacketHeader:
     
 ### Create ClientPacket Object ###
 
-class ClientPacket:
-    def __init__(self, data):
-        ClientPacketHeader
+class ClientPacket(ClientPacketHeader):
+    def __init__(self, length, hardware_id, sequence_number, destination, command_number, data):
+        super().__init__(length, hardware_id, sequence_number, destination, command_number)
         self.data = data
 
     def err(self):
         ''
-        if self.ClientPacketHeader.err() != None:
+        if super().err() is not None:
             return Exception
-        if self.ClientPacketHeader.length != CLIENT_PACKET_HEADER_LENGTH + len(self.data):
+        if self.length != CLIENT_PACKET_HEADER_LENGTH + len(self.data):
             return Exception('Packet length unequal to header length!')
         return None
     
@@ -80,9 +76,9 @@ class ClientPacket:
         'Packs client packet header and data into bytes'
         buf = [None]*CLIENT_PACKET_HEADER_LENGTH
         # Copy packed header bytes into buffer
-        copy.copy(buf, self.ClientPacketHeader.to_bytes())
+        buf = super().to_bytes().copy()
         # Copy data into buffer after header bytes
-        copy.copy(buf[CLIENT_PACKET_HEADER_LENGTH:], self.data)
+        buf[CLIENT_PACKET_HEADER_LENGTH:] = self.data.copy()
 
         return buf
     
@@ -90,19 +86,21 @@ class ClientPacket:
         if len(bs) < CLIENT_PACKET_HEADER_LENGTH:
             return Exception('Insufficient data!')
         
-        ph = ClientPacketHeader
-        if ph.FromBytes(bs[0:CLIENT_PACKET_HEADER_LENGTH]) != None:
+        if super().from_bytes(bs[0:CLIENT_PACKET_HEADER_LENGTH]) is not None:
             return Exception
         
-        self.ClientPacketHeader = ph
         self.data = bs[CLIENT_PACKET_HEADER_LENGTH:]
 
         return None
     
+# Construct new ClientPacket using provided header and data inputs
 def NewClientPacket(hdr, dat):
-    pkt = ClientPacket(hdr,dat)
-    pkt.ClientPacketHeader.length = CLIENT_PACKET_HEADER_LENGTH + len(dat)
-        
+    pkt = ClientPacket(hdr.length, hdr.harware_id, hdr.sequence_number, hdr.destination, hdr.command_number,dat)
+
+    pkt.length = CLIENT_PACKET_HEADER_LENGTH + len(dat)
+    
+    #consider deep copy?
+    return pkt
 
         
 
