@@ -1,7 +1,7 @@
 ### Imports ###
 
 import struct
-import copy
+import types
 
 ### Global Variables ###
 CLIENT_PACKET_ASM = [0x22, 0x69]
@@ -10,7 +10,7 @@ CLIENT_PACKET_HEADER_LENGTH = 7
 ### Create ClientPacketHeader Class ###
 
 class ClientPacketHeader:
-    def __init__(self, length: int, hardware_id: int, sequence_number: int, destination: int, command_number: int):
+    def __init__(self, length, hardware_id, sequence_number, destination, command_number):
         self.length = length
         self.hardware_id = hardware_id
         self.sequence_number = sequence_number
@@ -44,7 +44,7 @@ class ClientPacketHeader:
         return bs
     
     def from_bytes(self, bs: bytearray):
-        'Unpacks client packet header metadata from bytes'
+        'Hydrates the client packet header metadata from a bytearray'
         if len(bs) != CLIENT_PACKET_HEADER_LENGTH:
             return ValueError('Unexpected header length!')
         
@@ -59,8 +59,9 @@ class ClientPacketHeader:
 ### Create ClientPacket Class ###
 
 class ClientPacket(ClientPacketHeader):
-    def __init__(self, length: int, hardware_id: int, sequence_number: int, destination: int, command_number: int, data: bytearray):
-        ClientPacketHeader.__init__(self, length, hardware_id, sequence_number, destination, command_number)        
+    def __init__(self, length, hardware_id, sequence_number, destination, command_number, data: bytearray):
+        ClientPacketHeader.__init__(self, length, hardware_id, sequence_number, destination, command_number)
+        #self.header = ClientPacketHeader  
         self.data = data
         # super().__init__(length, hardware_id, sequence_number, destination, command_number)
 
@@ -83,7 +84,7 @@ class ClientPacket(ClientPacketHeader):
         return buf
     
     def from_bytes(self, bs: bytearray):
-        'Hydrates the client packet from provided byte array'
+        'Hydrates the client packet object from provided byte array'
         if len(bs) < CLIENT_PACKET_HEADER_LENGTH:
             return ValueError('ERROR: Insufficient data!')
         
@@ -91,12 +92,12 @@ class ClientPacket(ClientPacketHeader):
         if ClientPacketHeader.from_bytes(self, bs[0:CLIENT_PACKET_HEADER_LENGTH]) is not None:
             return ValueError
         
-        self.ClientPacketHeader = ClientPacketHeader()
+        self.header = ClientPacketHeader
         self.data = bs[CLIENT_PACKET_HEADER_LENGTH:]
 
         return None
     
-def new_client_packet(hardware_id: int, sequence_number: int, destination: int, command_number: int, dat: bytearray):
+def new_client_packet(hardware_id, sequence_number, destination, command_number, dat: bytearray):
     '''Construct new ClientPacket using provided header and data inputs, and determines its length'''
     pkt = ClientPacket(None, hardware_id, sequence_number, destination, command_number, dat)
 

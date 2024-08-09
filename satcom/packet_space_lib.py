@@ -14,7 +14,7 @@ PORT_IDS = [0,1]
 ### Create Space Packet Header Class ###
 
 class SpacePacketHeader:
-    def __init__(self, length: int, port: int, sequence_number: int, destination: int, command_number: int):
+    def __init__(self, length, port, sequence_number, destination, command_number):
         self.length = length
         self.port = port
         self.sequence_number = sequence_number
@@ -101,7 +101,7 @@ class SpacePacketFooter:
     
 ### Create Space Packet Class ###
 class SpacePacket(SpacePacketHeader, SpacePacketFooter):
-    def __init__(self, length: int, port: int, sequence_number: int, destination: int, command_number: int, data: bytearray, hardware_id: int, crc16: bytes):
+    def __init__(self, length, port, sequence_number, destination, command_number, data: bytearray, hardware_id, crc16):
         SpacePacketHeader.__init__(self, length, port, sequence_number, destination, command_number)
         self.data = data
         SpacePacketFooter.__init__(self, hardware_id, crc16)
@@ -160,9 +160,9 @@ class SpacePacket(SpacePacketHeader, SpacePacketFooter):
 
         return None
     
-def new_space_packet(hdr: SpacePacketHeader, dat: bytearray, ftr: SpacePacketFooter):
+def new_space_packet(port, seq_num, dest, cmd_num, dat: bytearray, hardware_id):
     'Constructs a new SpacePacket object using provided header and data inputs'
-    pkt = SpacePacket(length=None, port, sequence_number, destination, command_number, dat, hardware_id, crc16=None)
+    pkt = SpacePacket(None, port, seq_num, dest, cmd_num, dat, hardware_id, None)
 
     pkt.SpacePacketHeader.length = SPACE_PACKET_HEADER_LENGTH + len(dat) + SPACE_PACKET_FOOTER_LENGTH
     pkt.SpacePacketFooter.crc16 = pkt.make_space_packet_crc()

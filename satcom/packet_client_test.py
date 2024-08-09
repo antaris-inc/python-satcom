@@ -50,7 +50,7 @@ def test_new_client_packet_from_bytes_too_much_data():
         raise Exception('ERROR: Expected an error, but did not manifest!')
     
 def test_client_packet_from_bytes_small_frame():
-    'Verifies that data is preserved when '
+    'Verifies that client packet structure is preserved when passing a small frame'
     val = bytearray([0x0A, 0xFF, 0x03, 0x04, 0x00, 0xFD, 0x38, 0x01, 0x02, 0x03])
     pkt = ClientPacket()
 
