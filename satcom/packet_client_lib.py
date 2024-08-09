@@ -1,6 +1,5 @@
 ### Imports ###
 
-import openlst
 import struct
 import copy
 
@@ -8,10 +7,10 @@ import copy
 CLIENT_PACKET_ASM = [0x22, 0x69]
 CLIENT_PACKET_HEADER_LENGTH = 7
 
-### Create ClientPacketHeader Object ###
+### Create ClientPacketHeader Class ###
 
 class ClientPacketHeader:
-    def __init__(self, length, hardware_id, sequence_number, destination, command_number):
+    def __init__(self, length: int, hardware_id: int, sequence_number: int, destination: int, command_number: int):
         self.length = length
         self.hardware_id = hardware_id
         self.sequence_number = sequence_number
@@ -21,81 +20,85 @@ class ClientPacketHeader:
     def err(self):
         'Throws an error if any params are out of bounds'
         if self.length < 7 or self.length > 251:
-            return Exception('ERROR: Length must be 7-251')
+            return ValueError('ERROR: Length must be 7-251')
         if self.hardware_id < 0 or self.hardware_id > 65535:
-            return Exception('ERROR: HardwareID must be 0-65535')
+            return ValueError('ERROR: HardwareID must be 0-65535')
         if self.sequence_number < 0 or self.sequence_number > 65535:
-            return Exception('ERROR: SequenceNumber must be 0-65535')
+            return ValueError('ERROR: SequenceNumber must be 0-65535')
         if self.destination < 0 or self.destination > 255:
-            return Exception('ERROR: Destination must be 0-255')
+            return ValueError('ERROR: Destination must be 0-255')
         if self.command_number < 0 or self.command_number > 255:
-            return Exception('ERROR: CommandNumber must be 0-255')
+            return ValueError('ERROR: CommandNumber must be 0-255')
         return None
     
     def to_bytes(self):
-        'Packs client packet header metadata into bytes'
-        bs = [None]*CLIENT_PACKET_HEADER_LENGTH
+        'Packs client packet header metadata into a bytearray'
+        bs = bytearray(CLIENT_PACKET_HEADER_LENGTH) # Create empty bytearray of header length
         
-        bs[0] = bytes(self.length)
-        bs[1:3] = struct.pack('<H',self.hardware_id) # little endian, unsigned short
-        bs[3:5] = struct.pack('<H',self.sequence_number)
-        bs[5] = bytes(self.destination)
-        bs[6] = bytes(self.command_number)
+        bs[0] = self.length
+        bs[1:3] = [i for i in struct.pack('<H', self.hardware_id)]
+        bs[3:5] = [i for i in struct.pack('<H', self.sequence_number)]
+        bs[5] = self.destination
+        bs[6] = self.command_number
 
         return bs
     
-    def from_bytes(self, bs):
+    def from_bytes(self, bs: bytearray):
         'Unpacks client packet header metadata from bytes'
         if len(bs) != CLIENT_PACKET_HEADER_LENGTH:
-            return Exception('Unexpected header length!')
+            return ValueError('Unexpected header length!')
         
-        self.length = int(bs[0])
-        self.hardware_id = struct.unpack('<H',bs[1:3])
-        self.sequence_number = struct.unpack('<H',bs[3:5])
-        self.destination = int(bs[5])
-        self.command_number = int(bs[6])
+        self.length = bs[0]
+        self.hardware_id = struct.unpack('<H', bytes(bs[1:3]))[0] # convert int elements to bytes, then unpack
+        self.sequence_number = struct.unpack('<H',bytes(bs[3:5]))[0]
+        self.destination = bs[5]
+        self.command_number = bs[6]
 
         return None
     
-### Create ClientPacket Object ###
+### Create ClientPacket Class ###
 
 class ClientPacket(ClientPacketHeader):
-    def __init__(self, length, hardware_id, sequence_number, destination, command_number, data):
-        super().__init__(length, hardware_id, sequence_number, destination, command_number)
+    def __init__(self, length: int, hardware_id: int, sequence_number: int, destination: int, command_number: int, data: bytearray):
+        ClientPacketHeader.__init__(self, length, hardware_id, sequence_number, destination, command_number)        
         self.data = data
+        # super().__init__(length, hardware_id, sequence_number, destination, command_number)
 
     def err(self):
-        ''
-        if super().err() is not None:
-            return Exception
+        'Throws an error if any params are out of bounds'
+        if ClientPacketHeader.err(self) is not None:
+            return ClientPacketHeader.err(self)
         if self.length != CLIENT_PACKET_HEADER_LENGTH + len(self.data):
-            return Exception('Packet length unequal to header length!')
+            return ValueError('ERROR: Packet length unequal to header length!')
         return None
     
     def to_bytes(self):
-        'Packs client packet header and data into bytes'
-        buf = [None]*CLIENT_PACKET_HEADER_LENGTH
+        'Encodes client packet header and data into bytes'
+        buf = bytearray(CLIENT_PACKET_HEADER_LENGTH)
         # Copy packed header bytes into buffer
-        buf = super().to_bytes().copy()
+        buf = ClientPacketHeader.to_bytes(self).copy()
         # Copy data into buffer after header bytes
         buf[CLIENT_PACKET_HEADER_LENGTH:] = self.data.copy()
 
         return buf
     
-    def from_bytes(self, bs):
+    def from_bytes(self, bs: bytearray):
+        'Hydrates the client packet from provided byte array'
         if len(bs) < CLIENT_PACKET_HEADER_LENGTH:
-            return Exception('Insufficient data!')
+            return ValueError('ERROR: Insufficient data!')
         
-        if super().from_bytes(bs[0:CLIENT_PACKET_HEADER_LENGTH]) is not None:
-            return Exception
+        #cph = ClientPacketHeader()
+        if ClientPacketHeader.from_bytes(self, bs[0:CLIENT_PACKET_HEADER_LENGTH]) is not None:
+            return ValueError
         
+        self.ClientPacketHeader = ClientPacketHeader()
         self.data = bs[CLIENT_PACKET_HEADER_LENGTH:]
 
         return None
     
-# Construct new ClientPacket using provided header and data inputs
-def NewClientPacket(hdr, dat):
-    pkt = ClientPacket(hdr.length, hdr.harware_id, hdr.sequence_number, hdr.destination, hdr.command_number,dat)
+def new_client_packet(hardware_id: int, sequence_number: int, destination: int, command_number: int, dat: bytearray):
+    '''Construct new ClientPacket using provided header and data inputs, and determines its length'''
+    pkt = ClientPacket(None, hardware_id, sequence_number, destination, command_number, dat)
 
     pkt.length = CLIENT_PACKET_HEADER_LENGTH + len(dat)
     
