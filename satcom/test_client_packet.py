@@ -1,7 +1,6 @@
 ### Imports ###
 import unittest
 import satcom.client_packet_lib as client_pkt_lib
-### Test Functions ###
 
 class TestClientPacketHeader(unittest.TestCase):
 
@@ -24,7 +23,6 @@ class TestClientPacketHeader(unittest.TestCase):
         
         unittest.assertIsNone(got, msg=got)
         unittest.assertEqual(got, want, f"ERROR: Unexpected result: want={want}, got{got}")
-
         
     def test_new_client_packet_to_bytes_small_frame(self):
         'Test new client packet creation with a small dataframe'

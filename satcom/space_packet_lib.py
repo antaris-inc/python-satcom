@@ -21,7 +21,7 @@ def unpack_uint16(b):
 
 class SpacePacketHeader(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    
+
     length: int = 0
     port: int = 0
     sequence_number:  int = 0
@@ -68,6 +68,8 @@ class SpacePacketHeader(BaseModel):
         return None
 
 class SpacePacketFooter(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    
     hardware_id: int = 0
     crc16_checksum: bytearray = []
 
