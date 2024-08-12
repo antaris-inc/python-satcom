@@ -1,7 +1,7 @@
 ### Imports ###
 import struct
 import types
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 ### Global Variables ###
 CLIENT_PACKET_ASM = [0x22, 0x69]
@@ -16,6 +16,8 @@ def unpack_uint16(b):
     return struct.unpack('<H', bytes(b))[0] # little endian, unsigned short
 
 class ClientPacketHeader(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     length: int = 0
     hardware_id: int = 0
     sequence_number: int = 0

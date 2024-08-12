@@ -1,7 +1,7 @@
 ### Imports ###
 import struct
 from fastcrc import crc16
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 ### Global Variables ###
 
@@ -20,6 +20,8 @@ def unpack_uint16(b):
     return struct.unpack('<H', bytes(b))[0] # little endian, unsigned short
 
 class SpacePacketHeader(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    
     length: int = 0
     port: int = 0
     sequence_number:  int = 0

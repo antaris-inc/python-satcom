@@ -2,7 +2,6 @@
 import unittest
 import satcom.space_packet_lib as space_pkt_lib
 
-### Test Functions ###
 class TestSpacePacketHeader(unittest.TestCase):
 
     def test_space_packet_header_encode(self):
