@@ -1,7 +1,6 @@
 ### Imports ###
 import struct
-import binascii
-from crc import Calculator, Configuration, TableBasedRegister, Register
+from crc import Configuration, Register
 from pydantic import BaseModel, ConfigDict
 
 ### Global Variables ###
@@ -38,7 +37,7 @@ def crc16_maxim(bs: bytearray):
     inp = bs[1:len(bs)-2]
     register.init()
     register.update(inp)
-    
+
     return pack_uint16(register.digest())
 
 class SpacePacketHeader(BaseModel):
@@ -67,7 +66,6 @@ class SpacePacketHeader(BaseModel):
     def to_bytes(self):
         'Packs space packet header metadata into a bytearray'
         bs = bytearray(SPACE_PACKET_HEADER_LENGTH)
-        
         try:
             bs[0] = self.length
             bs[1] = self.port
@@ -78,13 +76,13 @@ class SpacePacketHeader(BaseModel):
             return bs
         except ValueError:
             self.err()
-    
+
     @classmethod
     def from_bytes(cls, bs: bytearray):
         'Unpacks space packet header metadata from bytes'
         if len(bs) != SPACE_PACKET_HEADER_LENGTH:
             raise ValueError('ERROR: Unexpected header length!')
-        
+
         try:
             obj = cls(
                 length = bs[0],
@@ -111,11 +109,11 @@ class SpacePacketFooter(BaseModel):
         if len(self.crc16_checksum) != 2:
             return ValueError('ERROR: CRC16 set incorrectly')
         return None
-    
+
     def to_bytes(self):
         'Packs space packet footer metadata into bytes'
         bs = bytearray(SPACE_PACKET_FOOTER_LENGTH)
-        
+
         try:
             bs[0:2] = pack_uint16(self.hardware_id)
             if len(self.crc16_checksum) == 0:
@@ -127,13 +125,13 @@ class SpacePacketFooter(BaseModel):
             return bs
         except ValueError:
             self.err()
-    
+
     @classmethod
     def from_bytes(cls, bs: bytearray):
         'Unpack space packet footer from a bytearray'
         if len(bs) != SPACE_PACKET_FOOTER_LENGTH:
             return ValueError('ERROR: Unexpected footer length')
-        
+
         try:
             crc16_checksum = bytearray(2)
             crc16_checksum[0] = bs[3]
@@ -154,8 +152,7 @@ class SpacePacket():
         self.header.length = SPACE_PACKET_HEADER_LENGTH + len(data) + SPACE_PACKET_FOOTER_LENGTH
         self._data = data
         self.footer = footer or SpacePacketFooter()
-        self.footer.crc16_checksum = crc16_maxim(self.to_bytes())
-        
+
     @property
     def data(self):
         'Protects data from being modified after instance call'
@@ -163,15 +160,11 @@ class SpacePacket():
 
     def verify_crc16(self):
         'Compares expected CRC of packet to computed CRC'
-        got = self.footer.crc16_checksum
-        #got = crc16_maxim(self.data)
-        #got = crc16_maxim(self.header.to_bytes()+self.data) + crc16_maxim(self.footer.to_bytes()[0:2])
-        #got = self.footer.crc16_checksum
-        got = crc16_maxim(self.header.to_bytes()+self.data+self.footer.to_bytes())
+        got = self.to_bytes()[-2:]
         want = crc16_maxim(self.to_bytes())
 
         if got[0] != want[0] or got[1] != want[1]:
-            return TypeError(f'ERROR: Checksum mismatch! got={got}, want = {want}')
+            return TypeError(f'ERROR: Checksum mismatch! got={got}, want={want}')
 
     def err(self):
         'Throws an error if any parameters are out of bounds'
@@ -184,7 +177,7 @@ class SpacePacket():
         if self.verify_crc16() is not None:
             return self.verify_crc16()
         return None
-    
+
     def to_bytes(self):
         'Encodes space packet to byte slice, including header, data, and footer'
         buf = bytearray(self.header.length)
@@ -193,19 +186,25 @@ class SpacePacket():
             buf = self.header.to_bytes()
             buf[SPACE_PACKET_HEADER_LENGTH:] = self.data
             buf[SPACE_PACKET_HEADER_LENGTH+len(self.data):] = self.footer.to_bytes()
+            buf[-2:] = crc16_maxim(buf)
+
             return buf
         except ValueError:
             self.err()
-    
+
     def from_bytes(self, bs: bytearray):
         'Hydrates the space packet from provided byte array, returning non-nil if errors are present'
         if len(bs) < SPACE_PACKET_HEADER_LENGTH:
             return ValueError('ERROR: Insufficient data!')
-        
+
         try:
             hdr = self.header.from_bytes(bs[0:SPACE_PACKET_HEADER_LENGTH])
             ftr = self.footer.from_bytes(bs[len(bs)-SPACE_PACKET_FOOTER_LENGTH:])
-            
-            return SpacePacket(data=bs[SPACE_PACKET_HEADER_LENGTH : len(bs)-SPACE_PACKET_FOOTER_LENGTH], header=hdr, footer=ftr)
+
+            return SpacePacket(
+                data=bs[SPACE_PACKET_HEADER_LENGTH : len(bs)-SPACE_PACKET_FOOTER_LENGTH],
+                header=hdr,
+                footer=ftr
+            )
         except ValueError:
             self.err()

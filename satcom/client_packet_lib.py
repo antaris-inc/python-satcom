@@ -36,11 +36,10 @@ class ClientPacketHeader(BaseModel):
         if self.command_number < 0 or self.command_number > 255:
             return ValueError('ERROR: CommandNumber must be 0-255')
         return None
-    
+
     def to_bytes(self):
         'Packs client packet header metadata into a bytearray'
-        bs = bytearray(CLIENT_PACKET_HEADER_LENGTH) # Create empty bytearray of header length
-        
+        bs = bytearray(CLIENT_PACKET_HEADER_LENGTH) # Create empty bytearray of header length  
         try:
             bs[0] = self.length
             bs[1:3] = pack_uint16(self.hardware_id)
@@ -51,13 +50,13 @@ class ClientPacketHeader(BaseModel):
             return bs
         except ValueError:
             self.err()
-    
+
     @classmethod
     def from_bytes(cls, bs: bytearray):
         'Hydrates the client packet header metadata from a bytearray'
         if len(bs) != CLIENT_PACKET_HEADER_LENGTH:
             raise ValueError('Unexpected header length!')
-        
+
         try:
             obj = cls(
                 length = bs[0],
@@ -89,7 +88,7 @@ class ClientPacket():
         if self.header.length != CLIENT_PACKET_HEADER_LENGTH + len(self.data):
             return ValueError('ERROR: Packet length unequal to header length!')
         return None
-    
+
     def to_bytes(self):
         'Encodes client packet header and data into bytes'
         try:
@@ -99,21 +98,16 @@ class ClientPacket():
 
             return buf
         except ValueError:
-            self.err()  
-    
+            self.err()
+
     def from_bytes(self, bs: bytearray):
         'Hydrates the client packet object from provided byte array'
         if len(bs) < CLIENT_PACKET_HEADER_LENGTH:
             raise ValueError('ERROR: Insufficient data!')
-        
+
         try:
             hdr = self.header.from_bytes(bs[0:CLIENT_PACKET_HEADER_LENGTH])
-    
+
             return ClientPacket(data=bs[CLIENT_PACKET_HEADER_LENGTH:], header=hdr)
         except ValueError:
             self.err()
-        
-
-        
-        
-        
