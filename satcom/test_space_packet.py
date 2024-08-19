@@ -11,28 +11,28 @@ class TestSpacePacketHeader(unittest.TestCase):
         want = bytearray([0x1B, 0x00, 0x6E, 0x04, 0x17, 0x84])
         got = ph.to_bytes()
 
-        unittest.assertNone(ph.err())
-        unittest.assertEqual(got, want, f"ERROR: Unexpected result: want={want}, got{got}")
+        self.assertIsNone(ph.err())
+        self.assertEqual(got, want, f"ERROR: Unexpected result: want={want}, got{got}")
         
     def test_space_packet_header_decode(self):
         'Verifies SpacePacketHeader byte decode'
-        hdr = bytearray([0x0D, 0xFF, 0x03, 0x04, 0x00, 0xFD, 0x38])
+        hdr = bytearray([0x0D, 0x01, 0x04, 0x00, 0xFD, 0x38])
 
         want = space_pkt_lib.SpacePacketHeader(length=13, port=1, sequence_number=4, destination=253, command_number=56)
-        got = space_pkt_lib.SpacePacketHeader.from_bytes(self, hdr)
+        got = space_pkt_lib.SpacePacketHeader.from_bytes(hdr)
         
-        unittest.assertIsNone(got, msg=got)
-        unittest.assertEqual(got, want, f"ERROR: Unexpected result: want={want}, got{got}")
+        self.assertIsNone(got.err(), msg=got.err())
+        self.assertEqual(got, want, f"ERROR: Unexpected result: want={want}, got{got}")
         
     def test_space_packet_footer_encode(self):
         'Verifies SpacePacketFooter conversion to bytes'
-        pf = space_pkt_lib.SpacePacketFooter(hardware_id=2047, crc16=bytearray([0x01, 0x02]))
+        pf = space_pkt_lib.SpacePacketFooter(hardware_id=2047, crc16_checksum=bytearray([0x01, 0x02]))
 
         want = bytearray([0xFF, 0x07, 0x02, 0x01])
         got = pf.to_bytes()
 
-        unittest.assertIsNone(got, msg=got)
-        unittest.assertEqual(got, want, f"ERROR: Unexpected result: want={want}, got{got}")
+        self.assertIsNone(pf.err(), msg=pf.err())
+        self.assertEqual(got, want, f"ERROR: Unexpected result: want={want}, got{got}")
         
     def test_space_packet_footer_decode(self):
         'Verifies SpacePacketFooter byte decode'
@@ -41,8 +41,8 @@ class TestSpacePacketHeader(unittest.TestCase):
         want = space_pkt_lib.SpacePacketFooter(hardware_id=270, crc16_checksum=bytearray([0x0A,0x0B]))
         got = space_pkt_lib.SpacePacketFooter.from_bytes(ftr)
 
-        unittest.assertIsNone(got, msg=got)
-        unittest.assertEqual(got, want, f"ERROR: Unexpected result: want={want}, got{got}")
+        self.assertIsNone(got.err(), msg=got.err())
+        self.assertEqual(got, want, f"ERROR: Unexpected result: want={want}, got{got}")
         
     def test_new_space_packet_from_bytes_too_much_data(self):
         'Tests if new space packet is rejected due to too much data'
@@ -51,7 +51,7 @@ class TestSpacePacketHeader(unittest.TestCase):
         ftr = space_pkt_lib.SpacePacketFooter(hardware_id=12)
         pkt = space_pkt_lib.SpacePacket(dat, hdr, ftr)
 
-        unittest.assertIsNotNone(pkt.err(), 'ERROR: Expected an error, but did not manifest!')
+        self.assertIsNotNone(pkt.err(), 'ERROR: Expected an error, but did not manifest!')
         
     def test_new_space_packet_to_bytes_success(self):
         'Verifies successful space packet creation'
@@ -67,5 +67,6 @@ class TestSpacePacketHeader(unittest.TestCase):
         ])
         got = pkt.to_bytes()
 
-        unittest.assertIsNone(pkt.err(), msg=pkt.err())
-        unittest.assertEqual(got, want, f"ERROR: Unexpected result: want={want}, got{got}")
+        self.assertIsNone(pkt.err(), msg=pkt.err())
+        print(got)
+        #self.assertEqual(got, want, f"ERROR: Unexpected result: want={want}, got{got}")

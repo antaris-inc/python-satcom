@@ -1,6 +1,5 @@
 ### Imports ###
 import struct
-import types
 from pydantic import BaseModel, ConfigDict
 
 ### Global Variables ###
@@ -9,7 +8,7 @@ CLIENT_PACKET_HEADER_LENGTH = 7
 
 def pack_uint16(u):
     'Helper to pack uint16 into packet header'
-    return list(struct.pack('<H', u)) # little endian, unsigned short
+    return bytearray(struct.pack('<H', u)) # little endian, unsigned short
 
 def unpack_uint16(b):
     'Helper to extract uint16 from header bytearray'
@@ -42,26 +41,35 @@ class ClientPacketHeader(BaseModel):
         'Packs client packet header metadata into a bytearray'
         bs = bytearray(CLIENT_PACKET_HEADER_LENGTH) # Create empty bytearray of header length
         
-        bs[0] = self.length
-        bs[1:3] = pack_uint16(self.hardware_id)
-        bs[3:5] = pack_uint16(self.sequence_number)
-        bs[5] = self.destination
-        bs[6] = self.command_number
+        try:
+            bs[0] = self.length
+            bs[1:3] = pack_uint16(self.hardware_id)
+            bs[3:5] = pack_uint16(self.sequence_number)
+            bs[5] = self.destination
+            bs[6] = self.command_number
 
-        return bs
+            return bs
+        except ValueError:
+            self.err()
     
-    def from_bytes(self, bs: bytearray):
+    @classmethod
+    def from_bytes(cls, bs: bytearray):
         'Hydrates the client packet header metadata from a bytearray'
         if len(bs) != CLIENT_PACKET_HEADER_LENGTH:
-            return ValueError('Unexpected header length!')
+            raise ValueError('Unexpected header length!')
         
-        self.length = bs[0]
-        self.hardware_id = unpack_uint16(bs[1:3])
-        self.sequence_number = unpack_uint16(bs[3:5])
-        self.destination = bs[5]
-        self.command_number = bs[6]
+        try:
+            obj = cls(
+                length = bs[0],
+                hardware_id = unpack_uint16(bs[1:3]),
+                sequence_number = unpack_uint16(bs[3:5]),
+                destination = bs[5],
+                command_number = bs[6]
+            )
 
-        return None
+            return obj
+        except ValueError:
+            cls.err(cls)
 
 class ClientPacket():
     def __init__(self, data: bytearray, header=None):
@@ -76,35 +84,34 @@ class ClientPacket():
 
     def err(self):
         'Throws an error if any params are out of bounds'
-        if self.header.err(self) is not None:
-            return self.header.err(self)
+        if self.header.err() is not None:
+            return self.header.err()
         if self.header.length != CLIENT_PACKET_HEADER_LENGTH + len(self.data):
             return ValueError('ERROR: Packet length unequal to header length!')
         return None
     
     def to_bytes(self):
         'Encodes client packet header and data into bytes'
-        buf = bytearray(CLIENT_PACKET_HEADER_LENGTH)
-        # Copy packed header bytes into buffer
-        buf = self.header.to_bytes(self).copy()
-        # Copy data into buffer after header bytes
-        buf[CLIENT_PACKET_HEADER_LENGTH:] = self.data.copy()
+        try:
+            buf = bytearray(CLIENT_PACKET_HEADER_LENGTH)
+            buf = self.header.to_bytes()
+            buf[CLIENT_PACKET_HEADER_LENGTH:] = self.data
 
-        return buf
+            return buf
+        except ValueError:
+            self.err()  
     
     def from_bytes(self, bs: bytearray):
         'Hydrates the client packet object from provided byte array'
         if len(bs) < CLIENT_PACKET_HEADER_LENGTH:
-            return ValueError('ERROR: Insufficient data!')
+            raise ValueError('ERROR: Insufficient data!')
         
-        if self.header.from_bytes(self, bs[0:CLIENT_PACKET_HEADER_LENGTH]) is not None:
-            return ValueError
-        
-        self.header = self.header # this seems redundant
-        self.data = bs[CLIENT_PACKET_HEADER_LENGTH:]
-
-        return None
-
+        try:
+            hdr = self.header.from_bytes(bs[0:CLIENT_PACKET_HEADER_LENGTH])
+    
+            return ClientPacket(data=bs[CLIENT_PACKET_HEADER_LENGTH:], header=hdr)
+        except ValueError:
+            self.err()
         
 
         
