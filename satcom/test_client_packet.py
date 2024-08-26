@@ -1,11 +1,10 @@
-### Imports ###
 import unittest
 import satcom.client_packet_lib as client_pkt_lib
 
 class TestClientPacketHeader(unittest.TestCase):
 
     def test_client_packet_header_encode(self):
-        'Verifies ClientPacketHeader conversion to bytes'
+        """Verifies ClientPacketHeader conversion to bytes"""
         ph = client_pkt_lib.ClientPacketHeader(
             length=10,
             hardware_id=755,
@@ -17,10 +16,10 @@ class TestClientPacketHeader(unittest.TestCase):
         got = ph.to_bytes()
 
         self.assertIsNone(ph.err(), msg = ph.err())
-        self.assertEqual(got, want, f"ERROR: Unexpected result: want={want}, got{got}")
+        self.assertEqual(got, want, f'ERROR: Unexpected result: want={want}, got{got}')
 
     def test_client_packet_header_decode(self):
-        'Verifies ClientPacktHeader byte decode'
+        """Verifies ClientPacktHeader byte decode"""
         hdr = bytearray([0x0D, 0xFF, 0x03, 0x04, 0x00, 0xFD, 0x38])
 
         want = client_pkt_lib.ClientPacketHeader(
@@ -33,10 +32,10 @@ class TestClientPacketHeader(unittest.TestCase):
         got = client_pkt_lib.ClientPacketHeader.from_bytes(hdr)
 
         self.assertIsNone(got.err(), msg=got.err())
-        self.assertEqual(got, want, f"ERROR: Unexpected result: want={want}, got{got}")
+        self.assertEqual(got, want, f'ERROR: Unexpected result: want={want}, got{got}')
 
     def test_new_client_packet_to_bytes_small_frame(self):
-        'Test new client packet creation with a small dataframe'
+        """Test new client packet creation with a small dataframe"""
         dat = bytearray([0x0A, 0x0B, 0x0C, 0x0D])
         hdr = client_pkt_lib.ClientPacketHeader(
             hardware_id=1023,
@@ -50,10 +49,10 @@ class TestClientPacketHeader(unittest.TestCase):
         got = pkt.to_bytes()
 
         self.assertIsNone(pkt.err(), msg=pkt.err())
-        self.assertEqual(got, want, f"ERROR: Unexpected result: want={want}, got{got}")
+        self.assertEqual(got, want, f'ERROR: Unexpected result: want={want}, got{got}')
 
     def test_new_client_packet_from_bytes_too_much_data(self):
-        'Tests if new client packet is rejected due to too much data'
+        """Tests if new client packet is rejected due to too much data"""
         dat = bytearray(1024)
         hdr = client_pkt_lib.ClientPacketHeader(
             hardware_id=1023,
@@ -66,7 +65,7 @@ class TestClientPacketHeader(unittest.TestCase):
         self.assertIsNotNone(pkt.err(), 'ERROR: Expected an error, but did not manifest!')
 
     def test_client_packet_from_bytes_small_frame(self):
-        'Verifies that client packet structure is preserved when passing a small frame'
+        """Verifies that client packet structure is preserved when passing a small frame"""
         val = bytearray([0x0A, 0xFF, 0x03, 0x04, 0x00, 0xFD, 0x38, 0x01, 0x02, 0x03])
         p = client_pkt_lib.ClientPacket(val)
         pkt = p.from_bytes(val)
@@ -75,13 +74,13 @@ class TestClientPacketHeader(unittest.TestCase):
         got = pkt.data
 
         self.assertIsNone(pkt.err(), msg=pkt.err())
-        self.assertEqual(got, want, f"ERROR: Unexpected result: want={want}, got{got}")
+        self.assertEqual(got, want, f'ERROR: Unexpected result: want={want}, got{got}')
 
     def test_client_packet_from_bytes_empty_frame(self):
-        'Verifies expected client packet behavior for no data'
+        """Verifies expected client packet behavior for no data"""
         val = bytearray([0x0A, 0xFF, 0x03, 0x04, 0x00, 0xFD, 0x38])
         p = client_pkt_lib.ClientPacket(val)
         pkt = p.from_bytes(val)
 
         self.assertIsNone(pkt.err(), msg=pkt.err())
-        self.assertEqual(len(pkt.data), 0, f"ERROR: Expected empty result, got {pkt.data}")
+        self.assertEqual(len(pkt.data), 0, f'ERROR: Expected empty result, got {pkt.data}')

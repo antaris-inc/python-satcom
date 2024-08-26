@@ -3,6 +3,5 @@ name = "satcom"
 version = "0.0.0"
 dependencies = [
 	#NOTE(bcwaldon): pydantic is not actually required, just proving deps are installed properly
-	"pydantic",
-	"crc"
+	"pydantic"
 ]
