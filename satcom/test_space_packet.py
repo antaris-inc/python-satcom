@@ -88,9 +88,21 @@ class TestSpacePacketHeader(unittest.TestCase):
         want = bytearray([
             0x0D, 0x01, 0xA0, 0x0F, 0xFD, 0x38, # packet header
             0x11, 0x22, 0x33, # original message
-            0x0C, 0x00, 0x3D, 0x7E # packet footer
+            0x0C, 0x00, 0xB9, 0xD0 # packet footer
         ])
         got = pkt.to_bytes()
 
         self.assertIsNone(pkt.err(), msg=pkt.err())
-        self.assertEqual(got, want, f'ERROR: Unexpected result: want={want}, got{got}')
+        self.assertEqual(got, want, f'ERROR: Unexpected result: want={want}, got={got}')
+
+    def test_new_space_packet_from_bytes(self):
+        """Validates succesful space frame encoding"""
+        val = bytearray([0x0D, 0xC0, 0x04, 0x00, 0xFD, 0x38, 0x01, 0x02, 0x03, 0xFF, 0x03, 0xBF, 0x04])
+        p = space_pkt_lib.SpacePacket(val)
+        pkt = p.from_bytes(val)
+
+        want = bytearray([0x01, 0x02, 0x03])
+        got = pkt.data
+
+        self.assertIsNone(pkt.err(), msg=pkt.err())
+        self.assertEqual(got, want, f'ERROR: Unexpected result: want={want}, got={got}')

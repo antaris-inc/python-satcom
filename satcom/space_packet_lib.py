@@ -5,21 +5,10 @@ SPACE_PACKET_PREAMBLE = [0xAA, 0xAA, 0xAA, 0xAA]
 SPACE_PACKET_ASM = [0xD3, 0x91, 0xD3, 0x91]
 SPACE_PACKET_HEADER_LENGTH = 6
 SPACE_PACKET_FOOTER_LENGTH = 4
-PORT_IDS = (0,1)
-
-def crc16(data: bytes) -> int:
-    """Calculate the CRC-16 (in the manner of the CC1110) of data"""
-    crc = 0xFFFF
-    for i in data:
-        for _ in range(0, 8):
-            if ((crc & 0x8000) >> 8) ^ (i & 0x80):
-                crc =(crc << 1) ^ 0x8005
-            else:
-                crc = crc << 1
-            i = i << 1
-    return crc & 0xFFFF
+CRC16_CHECKSUM_LENGTH_BYTES = 2
 
 class SpacePacketHeader(BaseModel):
+    # allow pydantic to use bytearray as a field type
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     length: int = 0
@@ -32,8 +21,6 @@ class SpacePacketHeader(BaseModel):
         """Throws an error if any params are out of bounds"""
         if self.length < 10 or self.length > 251:
             return ValueError('length must be 10-251')
-        if self.port not in PORT_IDS:
-            return ValueError('port must be 0 or 1')
         if self.sequence_number < 0 or self.sequence_number > 65535:
             return ValueError('sequence_number must be 0-65535')
         if self.destination < 0 or self.destination > 255:
@@ -48,7 +35,7 @@ class SpacePacketHeader(BaseModel):
 
         bs[0] = self.length
         bs[1] = self.port
-        bs[2:4] = utils.pack_uint16(self.sequence_number)
+        bs[2:4] = utils.pack_uint16_little_endian(self.sequence_number)
         bs[4] = self.destination
         bs[5] = self.command_number
 
@@ -63,7 +50,7 @@ class SpacePacketHeader(BaseModel):
         obj = cls(
             length = bs[0],
             port = bs[1],
-            sequence_number = utils.unpack_uint16(bs[2:4]),
+            sequence_number = utils.unpack_uint16_little_endian(bs[2:4]),
             destination = bs[4],
             command_number = bs[5]
         )
@@ -71,6 +58,7 @@ class SpacePacketHeader(BaseModel):
         return obj
 
 class SpacePacketFooter(BaseModel):
+    # allow pydantic to use bytearray as a field type
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     hardware_id: int = 0
@@ -81,18 +69,17 @@ class SpacePacketFooter(BaseModel):
         if self.hardware_id < 0 or self.hardware_id > 65535:
             return ValueError('hardware_id must be 0-65535')
         if len(self.crc16_checksum) != 2:
-            return ValueError('crc16_checksum set incorrectly')
+            return ValueError('crc16_checksum set incorrectly.')
         return None
 
     def to_bytes(self) -> bytearray:
         """Packs space packet footer metadata into bytes"""
         bs = bytearray(SPACE_PACKET_FOOTER_LENGTH)
 
-        bs[0:2] = utils.pack_uint16(self.hardware_id)
-        self.crc16_checksum = bytearray(self.crc16_checksum)
-        if len(self.crc16_checksum) == 0:
-            self.crc16_checksum = bytearray([0x00, 0x00])
-        else:
+        bs[0:2] = utils.pack_uint16_little_endian(self.hardware_id)
+
+        if len(self.crc16_checksum) != 0:
+            # big to little endian mapping
             bs[2] = self.crc16_checksum[1]
             bs[3] = self.crc16_checksum[0]
 
@@ -109,7 +96,7 @@ class SpacePacketFooter(BaseModel):
         crc16_checksum[1] = bs[2]
 
         obj = cls(
-            hardware_id = utils.unpack_uint16(bs[0:2]),
+            hardware_id = utils.unpack_uint16_little_endian(bs[0:2]),
             crc16_checksum = crc16_checksum
         )
 
@@ -125,27 +112,38 @@ class SpacePacket():
 
     @property
     def data(self):
-        """Protects data from being modified after instance call"""
+        """Protects data from being modified after instantiation"""
         return self._data
 
     def verify_crc16(self):
         """Compares expected CRC of packet to computed CRC"""
-        #got = self.footer.crc16_checksum
-        got = utils.pack_uint16(crc16(self.header.to_bytes() + self.data + bytes(12)))
-        #want = crc16(self.to_bytes()) # this is evaluating with a crc placeholder of [0x00, 0x00]
-        #want = self.to_bytes()[-2:]
-        want = bytearray([0x3D, 0x7E])
+        got = self.footer.crc16_checksum
+        want = self.make_packet_checksum()
 
-        if got != want or got != want:
+        if got[0] != want[0] or got[1] != want[1]:
             return TypeError(f'checksum mismatch! got={got}, want={want}')
         
-    def make_packet_checksum(self) -> int:
+    def make_packet_checksum(self) -> bytearray:
         """Creates checksum of packet from candidate bytes"""
         bs = self.to_bytes()
-        inp = bs[1:len(bs)-2]
-        
-        return crc16(inp)
+        inp = bs[0:len(bs)-2]
 
+        # Evaluate checksum
+        ck = 0xFFFF
+        for b in inp:
+            for _ in range(0,8):
+                if (((ck & 0x8000) >> 8) ^ (b & 0x80)) > 0:
+                    ck = (ck << 1) ^ 0x8005
+                else:
+                    ck = ck << 1
+                b = b << 1
+        ck = ck & 0xFFFF
+
+        ckb = bytearray(2)
+        ckb = utils.pack_uint16_big_endian(ck)
+
+        return ckb
+    
     def err(self):
         """Throws an error if any parameters are out of bounds"""
         if self.header.err() is not None:
@@ -165,7 +163,6 @@ class SpacePacket():
         buf = self.header.to_bytes()
         buf[SPACE_PACKET_HEADER_LENGTH:] = self.data
         buf[SPACE_PACKET_HEADER_LENGTH+len(self.data):] = self.footer.to_bytes()
-
         return buf
 
     def from_bytes(self, bs: bytearray):
