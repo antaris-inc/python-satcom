@@ -8,9 +8,6 @@ SPACE_PACKET_FOOTER_LENGTH = 4
 CRC16_CHECKSUM_LENGTH_BYTES = 2
 
 class SpacePacketHeader(BaseModel):
-    # allow pydantic to use bytearray as a field type
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     length: int = 0
     port: int = 0
     sequence_number:  int = 0
@@ -92,6 +89,7 @@ class SpacePacketFooter(BaseModel):
             return ValueError('unexpected footer length')
 
         crc16_checksum = bytearray(2)
+        # little to big endian mapping
         crc16_checksum[0] = bs[3]
         crc16_checksum[1] = bs[2]
 
@@ -108,22 +106,22 @@ class SpacePacket():
         self.header.length = SPACE_PACKET_HEADER_LENGTH + len(data) + SPACE_PACKET_FOOTER_LENGTH
         self._data = data
         self.footer = footer or SpacePacketFooter()
-        self.footer.crc16_checksum = self.make_packet_checksum()
+        self.footer.crc16_checksum = self._make_packet_checksum()
 
     @property
     def data(self):
         """Protects data from being modified after instantiation"""
         return self._data
 
-    def verify_crc16(self):
+    def _verify_crc16(self):
         """Compares expected CRC of packet to computed CRC"""
         got = self.footer.crc16_checksum
-        want = self.make_packet_checksum()
+        want = self._make_packet_checksum()
 
         if got[0] != want[0] or got[1] != want[1]:
-            return TypeError(f'checksum mismatch! got={got}, want={want}')
+            return ValueError(f'checksum mismatch: got={got} want={want}')
         
-    def make_packet_checksum(self) -> bytearray:
+    def _make_packet_checksum(self) -> bytearray:
         """Creates checksum of packet from candidate bytes"""
         bs = self.to_bytes()
         inp = bs[0:len(bs)-2]
@@ -152,8 +150,8 @@ class SpacePacket():
             return self.footer.err()
         if self.header.length != SPACE_PACKET_HEADER_LENGTH + len(self.data) + SPACE_PACKET_FOOTER_LENGTH:
             return ValueError('packet length unequal to header length')
-        if self.verify_crc16() is not None:
-            return self.verify_crc16()
+        if self._verify_crc16() is not None:
+            return self._verify_crc16()
         return None
 
     def to_bytes(self) -> bytearray:

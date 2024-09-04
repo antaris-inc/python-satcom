@@ -6,7 +6,7 @@ CLIENT_PACKET_HEADER_LENGTH = 7
 
 class ClientPacketHeader(BaseModel):
     # allow pydantic to use bytearray as a field type
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    #model_config = ConfigDict(arbitrary_types_allowed=True)
 
     length: int = 0
     hardware_id: int = 0
@@ -89,7 +89,5 @@ class ClientPacket():
             raise ValueError('insufficient data')
 
         hdr = self.header.from_bytes(bs[0:CLIENT_PACKET_HEADER_LENGTH])
-        if hdr is not None:
-            raise ValueError(hdr.length)
 
         return ClientPacket(data=bs[CLIENT_PACKET_HEADER_LENGTH:], header=hdr)
