@@ -16,7 +16,7 @@ class TestClientPacket(unittest.TestCase):
         got = ph.to_bytes()
 
         self.assertIsNone(ph.err(), msg = ph.err())
-        self.assertEqual(got, want, f'ERROR: Unexpected result: want={want}, got{got}')
+        self.assertEqual(got, want, f'unexpected result: want={want} got={got}')
 
     def test_client_packet_header_decode(self):
         """Verifies ClientPacktHeader byte decode"""
@@ -32,7 +32,7 @@ class TestClientPacket(unittest.TestCase):
         got = client_pkt_lib.ClientPacketHeader.from_bytes(hdr)
 
         self.assertIsNone(got.err(), msg=got.err())
-        self.assertEqual(got, want, f'ERROR: Unexpected result: want={want}, got{got}')
+        self.assertEqual(got, want, f'unexpected result: want={want} got={got}')
 
     def test_new_client_packet_to_bytes_small_frame(self):
         """Test new client packet creation with a small dataframe"""
@@ -49,7 +49,7 @@ class TestClientPacket(unittest.TestCase):
         got = pkt.to_bytes()
 
         self.assertIsNone(pkt.err(), msg=pkt.err())
-        self.assertEqual(got, want, f'ERROR: Unexpected result: want={want}, got{got}')
+        self.assertEqual(got, want, f'unexpected result: want={want} got={got}')
 
     def test_new_client_packet_from_bytes_too_much_data(self):
         """Tests if new client packet is rejected due to too much data"""
@@ -62,7 +62,7 @@ class TestClientPacket(unittest.TestCase):
         )
         pkt = client_pkt_lib.ClientPacket(dat, hdr)
 
-        self.assertIsNotNone(pkt.err(), 'ERROR: Expected an error, but did not manifest!')
+        self.assertIsNotNone(pkt.err(), 'expected an error, but did not manifest')
 
     def test_client_packet_from_bytes_small_frame(self):
         """Verifies that client packet structure is preserved when passing a small frame"""
@@ -74,7 +74,7 @@ class TestClientPacket(unittest.TestCase):
         got = pkt.data
 
         self.assertIsNone(pkt.err(), msg=pkt.err())
-        self.assertEqual(got, want, f'ERROR: Unexpected result: want={want}, got{got}')
+        self.assertEqual(got, want, f'unexpected result: want={want} got={got}')
 
     def test_client_packet_from_bytes_empty_frame(self):
         """Verifies expected client packet behavior for no data"""
@@ -83,4 +83,4 @@ class TestClientPacket(unittest.TestCase):
         pkt = p.from_bytes(val)
 
         self.assertIsNone(pkt.err(), msg=pkt.err())
-        self.assertEqual(len(pkt.data), 0, f'ERROR: Expected empty result, got {pkt.data}')
+        self.assertEqual(len(pkt.data), 0, f'expected empty result, got {pkt.data}')

@@ -16,7 +16,7 @@ class TestSpacePacket(unittest.TestCase):
         got = ph.to_bytes()
 
         self.assertIsNone(ph.err())
-        self.assertEqual(got, want, f'ERROR: Unexpected result: want={want}, got{got}')
+        self.assertEqual(got, want, f'unexpected result: want={want} got={got}')
 
     def test_space_packet_header_decode(self):
         """Verifies SpacePacketHeader byte decode"""
@@ -32,7 +32,7 @@ class TestSpacePacket(unittest.TestCase):
         got = space_pkt_lib.SpacePacketHeader.from_bytes(hdr)
 
         self.assertIsNone(got.err(), msg=got.err())
-        self.assertEqual(got, want, f'ERROR: Unexpected result: want={want}, got{got}')
+        self.assertEqual(got, want, f'unexpected result: want={want} got={got}')
 
     def test_space_packet_footer_encode(self):
         """Verifies SpacePacketFooter conversion to bytes"""
@@ -44,7 +44,7 @@ class TestSpacePacket(unittest.TestCase):
         got = pf.to_bytes()
 
         self.assertIsNone(pf.err(), msg=pf.err())
-        self.assertEqual(got, want, f'ERROR: Unexpected result: want={want}, got{got}')
+        self.assertEqual(got, want, f'unexpected result: want={want} got={got}')
 
     def test_space_packet_footer_decode(self):
         """Verifies SpacePacketFooter byte decode"""
@@ -57,7 +57,7 @@ class TestSpacePacket(unittest.TestCase):
         got = space_pkt_lib.SpacePacketFooter.from_bytes(ftr)
 
         self.assertIsNone(got.err(), msg=got.err())
-        self.assertEqual(got, want, f'ERROR: Unexpected result: want={want}, got{got}')
+        self.assertEqual(got, want, f'unexpected result: want={want} got={got}')
 
     def test_new_space_packet_from_bytes_too_much_data(self):
         """Tests if new space packet is rejected due to too much data"""
@@ -94,7 +94,7 @@ class TestSpacePacket(unittest.TestCase):
         got = pkt.to_bytes()
 
         self.assertIsNone(pkt.err(), msg=pkt.err())
-        self.assertEqual(got, want, f'ERROR: Unexpected result: want={want}, got={got}')
+        self.assertEqual(got, want, f'unexpected result: want={want} got={got}')
 
     def test_new_space_packet_from_bytes(self):
         """Validates succesful space frame encoding"""
@@ -106,4 +106,4 @@ class TestSpacePacket(unittest.TestCase):
         got = pkt.data
 
         self.assertIsNone(pkt.err(), msg=pkt.err())
-        self.assertEqual(got, want, f'ERROR: Unexpected result: want={want}, got={got}')
+        self.assertEqual(got, want, f'unexpected result: want={want} got={got}')
