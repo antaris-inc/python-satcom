@@ -1,7 +1,7 @@
 import unittest
 import satcom.client_packet_lib as client_pkt_lib
 
-class TestClientPacketHeader(unittest.TestCase):
+class TestClientPacket(unittest.TestCase):
 
     def test_client_packet_header_encode(self):
         """Verifies ClientPacketHeader conversion to bytes"""

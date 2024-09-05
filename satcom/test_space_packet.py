@@ -1,7 +1,7 @@
 import unittest
 import satcom.space_packet_lib as space_pkt_lib
 
-class TestSpacePacketHeader(unittest.TestCase):
+class TestSpacePacket(unittest.TestCase):
 
     def test_space_packet_header_encode(self):
         """Verifies ClientPacketHeader conversion to bytes"""
@@ -69,9 +69,10 @@ class TestSpacePacketHeader(unittest.TestCase):
             command_number=56
         )
         ftr = space_pkt_lib.SpacePacketFooter(hardware_id=12)
-        pkt = space_pkt_lib.SpacePacket(dat, hdr, ftr)
 
-        self.assertIsNotNone(pkt.err(), 'ERROR: Expected an error, but did not manifest!')
+        # Tests if a ValueError is raised when assembling the packet
+        with self.assertRaises(ValueError):
+            space_pkt_lib.SpacePacket(dat, hdr, ftr)
 
     def test_new_space_packet_to_bytes_success(self):
         """Verifies successful space packet creation"""

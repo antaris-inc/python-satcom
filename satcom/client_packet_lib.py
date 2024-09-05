@@ -1,13 +1,10 @@
 import utils
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 CLIENT_PACKET_ASM = [0x22, 0x69]
 CLIENT_PACKET_HEADER_LENGTH = 7
 
 class ClientPacketHeader(BaseModel):
-    # allow pydantic to use bytearray as a field type
-    #model_config = ConfigDict(arbitrary_types_allowed=True)
-
     length: int = 0
     hardware_id: int = 0
     sequence_number: int = 0
