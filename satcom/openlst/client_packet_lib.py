@@ -1,5 +1,5 @@
-import utils
 from pydantic import BaseModel
+import satcom.openlst.utils as utils
 
 CLIENT_PACKET_ASM = [0x22, 0x69]
 CLIENT_PACKET_HEADER_LENGTH = 7

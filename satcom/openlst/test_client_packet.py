@@ -1,5 +1,5 @@
 import unittest
-import satcom.client_packet_lib as client_pkt_lib
+import satcom.openlst.client_packet_lib as client_pkt_lib
 
 class TestClientPacket(unittest.TestCase):
 

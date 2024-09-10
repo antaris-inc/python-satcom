@@ -1,4 +1,4 @@
-import utils
+import satcom.openlst.utils as utils
 from pydantic import BaseModel, ConfigDict
 
 SPACE_PACKET_PREAMBLE = [0xAA, 0xAA, 0xAA, 0xAA]

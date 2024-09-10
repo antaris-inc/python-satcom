@@ -1,5 +1,5 @@
-import utils
 import unittest
+import satcom.openlst.utils as utils
 
 class TestUtils(unittest.TestCase):
 
