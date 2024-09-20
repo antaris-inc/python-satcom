@@ -1,5 +1,8 @@
 from pydantic import BaseModel, ConfigDict
 
+from satcom.utils import utils
+
+
 SPACE_PACKET_PREAMBLE = [0xAA, 0xAA, 0xAA, 0xAA]
 SPACE_PACKET_ASM = [0xD3, 0x91, 0xD3, 0x91]
 
