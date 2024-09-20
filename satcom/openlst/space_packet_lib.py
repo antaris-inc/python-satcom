@@ -1,11 +1,11 @@
-from satcom.utils import utils
 from pydantic import BaseModel, ConfigDict
 
 SPACE_PACKET_PREAMBLE = [0xAA, 0xAA, 0xAA, 0xAA]
 SPACE_PACKET_ASM = [0xD3, 0x91, 0xD3, 0x91]
+
 SPACE_PACKET_HEADER_LENGTH = 6
 SPACE_PACKET_FOOTER_LENGTH = 4
-CRC16_CHECKSUM_LENGTH_BYTES = 2
+
 
 class SpacePacketHeader(BaseModel):
     length: int = 0
@@ -120,7 +120,7 @@ class SpacePacket():
 
         if got[0] != want[0] or got[1] != want[1]:
             return ValueError(f'checksum mismatch: got={got} want={want}')
-        
+
     def _make_packet_checksum(self) -> bytearray:
         """Creates checksum of packet from candidate bytes"""
         bs = self.to_bytes()
@@ -141,7 +141,7 @@ class SpacePacket():
         ckb = utils.pack_ushort_big_endian(ck)
 
         return ckb
-    
+
     def err(self):
         """Throws an error if any parameters are out of bounds"""
         if self.header.err() is not None:
