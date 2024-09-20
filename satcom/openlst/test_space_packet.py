@@ -1,5 +1,5 @@
 import unittest
-import satcom.space_packet_lib as space_pkt_lib
+import satcom.openlst.space_packet_lib as space_pkt_lib
 
 class TestSpacePacket(unittest.TestCase):
 
