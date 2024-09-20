@@ -5,6 +5,12 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
+<<<<<<< HEAD
+=======
+# This code was copied from https://github.com/rzimmerman/gr-openlst at
+# commit 09ba2480de7f5f620f398f387ab402bbf75fa64e
+# 
+>>>>>>> main
 
 def pn9():
     """pn9 returns a generator that yields a PN9 sequence
