@@ -159,7 +159,6 @@ class SpacePacket():
         buf = bytearray(self.header.length)
 
         buf[:SPACE_PACKET_HEADER_LENGTH] = self.header.to_bytes()
-        buf[0] += 1
         buf[SPACE_PACKET_HEADER_LENGTH:] = self.data
         buf[SPACE_PACKET_HEADER_LENGTH+len(self.data):] = self.footer.to_bytes()
         return buf

@@ -76,7 +76,6 @@ class ClientPacket():
         """Encodes client packet and data into bytes"""
         buf = bytearray(CLIENT_PACKET_HEADER_LENGTH)
         buf[:CLIENT_PACKET_HEADER_LENGTH] = self.header.to_bytes()
-        buf[0] += 1
         buf[CLIENT_PACKET_HEADER_LENGTH:] = self.data
 
         return buf
