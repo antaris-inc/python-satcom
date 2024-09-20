@@ -1,5 +1,5 @@
 import unittest
-import satcom.space_packet_lib as space_pkt_lib
+import satcom.openlst.space_packet_lib as space_pkt_lib
 
 class TestSpacePacket(unittest.TestCase):
 
@@ -87,9 +87,9 @@ class TestSpacePacket(unittest.TestCase):
         pkt = space_pkt_lib.SpacePacket(dat, hdr, ftr)
         
         want = bytearray([
-            0x0D, 0x01, 0xA0, 0x0F, 0xFD, 0x38, # packet header
+            0x0C, 0x01, 0xA0, 0x0F, 0xFD, 0x38, # packet header
             0x11, 0x22, 0x33, # original message
-            0x0C, 0x00, 0xB9, 0xD0 # packet footer
+            0x0C, 0x00, 0xFA, 0x45 # packet footer
         ])
         got = pkt.to_bytes()
 

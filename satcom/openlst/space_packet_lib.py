@@ -1,4 +1,4 @@
-import utils
+from satcom.utils import utils
 from pydantic import BaseModel, ConfigDict
 
 SPACE_PACKET_PREAMBLE = [0xAA, 0xAA, 0xAA, 0xAA]
@@ -16,8 +16,8 @@ class SpacePacketHeader(BaseModel):
 
     def err(self):
         """Throws an error if any params are out of bounds"""
-        if self.length < 10 or self.length > 251:
-            return ValueError('length must be 10-251')
+        if self.length < 9 or self.length > 251:
+            return ValueError('length must be 9-251')
         if self.sequence_number < 0 or self.sequence_number > 65535:
             return ValueError('sequence_number must be 0-65535')
         if self.destination < 0 or self.destination > 255:
@@ -32,7 +32,7 @@ class SpacePacketHeader(BaseModel):
 
         bs[0] = self.length
         bs[1] = self.port
-        bs[2:4] = utils.pack_uint16_little_endian(self.sequence_number)
+        bs[2:4] = utils.pack_ushort_little_endian(self.sequence_number)
         bs[4] = self.destination
         bs[5] = self.command_number
 
@@ -47,7 +47,7 @@ class SpacePacketHeader(BaseModel):
         obj = cls(
             length = bs[0],
             port = bs[1],
-            sequence_number = utils.unpack_uint16_little_endian(bs[2:4]),
+            sequence_number = utils.unpack_ushort_little_endian(bs[2:4]),
             destination = bs[4],
             command_number = bs[5]
         )
@@ -73,7 +73,7 @@ class SpacePacketFooter(BaseModel):
         """Packs space packet footer metadata into bytes"""
         bs = bytearray(SPACE_PACKET_FOOTER_LENGTH)
 
-        bs[0:2] = utils.pack_uint16_little_endian(self.hardware_id)
+        bs[0:2] = utils.pack_ushort_little_endian(self.hardware_id)
 
         if len(self.crc16_checksum) != 0:
             # big to little endian mapping
@@ -94,7 +94,7 @@ class SpacePacketFooter(BaseModel):
         crc16_checksum[1] = bs[2]
 
         obj = cls(
-            hardware_id = utils.unpack_uint16_little_endian(bs[0:2]),
+            hardware_id = utils.unpack_ushort_little_endian(bs[0:2]),
             crc16_checksum = crc16_checksum
         )
 
@@ -103,7 +103,7 @@ class SpacePacketFooter(BaseModel):
 class SpacePacket():
     def __init__(self, data: bytearray, header=None, footer=None):
         self.header = header or SpacePacketHeader()
-        self.header.length = SPACE_PACKET_HEADER_LENGTH + len(data) + SPACE_PACKET_FOOTER_LENGTH
+        self.header.length = SPACE_PACKET_HEADER_LENGTH + len(data) + SPACE_PACKET_FOOTER_LENGTH - 1
         self._data = data
         self.footer = footer or SpacePacketFooter()
         self.footer.crc16_checksum = self._make_packet_checksum()
@@ -138,7 +138,7 @@ class SpacePacket():
         ck = ck & 0xFFFF
 
         ckb = bytearray(2)
-        ckb = utils.pack_uint16_big_endian(ck)
+        ckb = utils.pack_ushort_big_endian(ck)
 
         return ckb
     
@@ -148,7 +148,7 @@ class SpacePacket():
             return self.header.err()
         if self.footer.err() is not None:
             return self.footer.err()
-        if self.header.length != SPACE_PACKET_HEADER_LENGTH + len(self.data) + SPACE_PACKET_FOOTER_LENGTH:
+        if self.header.length != SPACE_PACKET_HEADER_LENGTH + len(self.data) + SPACE_PACKET_FOOTER_LENGTH - 1:
             return ValueError('packet length unequal to header length')
         if self._verify_crc16() is not None:
             return self._verify_crc16()
@@ -158,21 +158,24 @@ class SpacePacket():
         """Encodes space packet to byte slice, including header, data, and footer"""
         buf = bytearray(self.header.length)
 
-        buf = self.header.to_bytes()
+        buf[:SPACE_PACKET_HEADER_LENGTH] = self.header.to_bytes()
         buf[SPACE_PACKET_HEADER_LENGTH:] = self.data
         buf[SPACE_PACKET_HEADER_LENGTH+len(self.data):] = self.footer.to_bytes()
         return buf
 
-    def from_bytes(self, bs: bytearray):
+    @classmethod
+    def from_bytes(cls, bs: bytearray):
         """Hydrates the space packet from provided byte array, returning non-nil if errors are present"""
         if len(bs) < SPACE_PACKET_HEADER_LENGTH:
             return ValueError('insufficient data')
 
-        hdr = self.header.from_bytes(bs[0:SPACE_PACKET_HEADER_LENGTH])
-        ftr = self.footer.from_bytes(bs[len(bs)-SPACE_PACKET_FOOTER_LENGTH:])
+        hdr = SpacePacketHeader.from_bytes(bs[0:SPACE_PACKET_HEADER_LENGTH])
+        ftr = SpacePacketFooter.from_bytes(bs[len(bs)-SPACE_PACKET_FOOTER_LENGTH:])
 
-        return SpacePacket(
+        obj = cls(
             data=bs[SPACE_PACKET_HEADER_LENGTH : len(bs)-SPACE_PACKET_FOOTER_LENGTH],
             header=hdr,
             footer=ftr
         )
+
+        return obj

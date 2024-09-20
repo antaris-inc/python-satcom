@@ -1,5 +1,5 @@
 import unittest
-import satcom.client_packet_lib as client_pkt_lib
+import satcom.openlst.client_packet_lib as client_pkt_lib
 
 class TestClientPacket(unittest.TestCase):
 
@@ -45,7 +45,7 @@ class TestClientPacket(unittest.TestCase):
         )
         pkt = client_pkt_lib.ClientPacket(dat, hdr)
 
-        want = bytearray([0x0B, 0xFF, 0x03, 0x01, 0x00, 0xFD, 0x38, 0x0A, 0x0B, 0x0C, 0x0D])
+        want = bytearray([0x0A, 0xFF, 0x03, 0x01, 0x00, 0xFD, 0x38, 0x0A, 0x0B, 0x0C, 0x0D])
         got = pkt.to_bytes()
 
         self.assertIsNone(pkt.err(), msg=pkt.err())
@@ -82,5 +82,5 @@ class TestClientPacket(unittest.TestCase):
         p = client_pkt_lib.ClientPacket(val)
         pkt = p.from_bytes(val)
 
-        self.assertIsNone(pkt.err(), msg=pkt.err())
+        self.assertIsNone(pkt.err(), msg=f'{pkt.header.length}')
         self.assertEqual(len(pkt.data), 0, f'expected empty result, got {pkt.data}')
