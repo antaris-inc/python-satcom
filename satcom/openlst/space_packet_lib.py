@@ -3,8 +3,8 @@ from pydantic import BaseModel, ConfigDict
 from satcom.utils import utils
 
 
-SPACE_PACKET_PREAMBLE = [0xAA, 0xAA, 0xAA, 0xAA]
-SPACE_PACKET_ASM = [0xD3, 0x91, 0xD3, 0x91]
+SPACE_PACKET_PREAMBLE = bytes([0xAA, 0xAA, 0xAA, 0xAA])
+SPACE_PACKET_ASM = bytes([0xD3, 0x91, 0xD3, 0x91])
 
 SPACE_PACKET_HEADER_LENGTH = 6
 SPACE_PACKET_FOOTER_LENGTH = 4
