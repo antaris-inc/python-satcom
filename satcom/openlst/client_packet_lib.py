@@ -28,8 +28,8 @@ class ClientPacketHeader(BaseModel):
         return None
 
     def to_bytes(self):
-        """Packs client packet header metadata into a bytearray"""
-        bs = bytearray(CLIENT_PACKET_HEADER_LENGTH) # Create empty bytearray of header length
+        """Packs client packet header metadata into bytes"""
+        bs = bytearray(CLIENT_PACKET_HEADER_LENGTH)
 
         bs[0] = self.length
         bs[1:3] = utils.pack_ushort_little_endian(self.hardware_id)
@@ -37,11 +37,11 @@ class ClientPacketHeader(BaseModel):
         bs[5] = self.destination
         bs[6] = self.command_number
 
-        return bs
+        return bytes(bs)
 
     @classmethod
-    def from_bytes(cls, bs: bytearray):
-        """Hydrates the client packet header metadata from a bytearray"""
+    def from_bytes(cls, bs: bytes):
+        """Hydrates the client packet header metadata from bytes"""
         if len(bs) != CLIENT_PACKET_HEADER_LENGTH:
             raise ValueError('unexpected header length')
 
@@ -56,7 +56,7 @@ class ClientPacketHeader(BaseModel):
         return obj
 
 class ClientPacket():
-    def __init__(self, data: bytearray, header=None):
+    def __init__(self, data: bytes, header=None):
         self.header = header or ClientPacketHeader()
         self.header.length = CLIENT_PACKET_HEADER_LENGTH + len(data) - 1
         self._data = data
@@ -80,10 +80,10 @@ class ClientPacket():
         buf[:CLIENT_PACKET_HEADER_LENGTH] = self.header.to_bytes()
         buf[CLIENT_PACKET_HEADER_LENGTH:] = self.data
 
-        return buf
+        return bytes(buf)
 
     @classmethod
-    def from_bytes(cls, bs: bytearray):
+    def from_bytes(cls, bs: bytes):
         """Hydrates the client packet object from provided byte array"""
         if len(bs) < CLIENT_PACKET_HEADER_LENGTH:
             raise ValueError('insufficient data')
