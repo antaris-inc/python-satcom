@@ -34,26 +34,15 @@ class TestCSPPacket(unittest.TestCase):
         self.assertIsNone(got.err(), msg=got.err())
         self.assertEqual(got, want, f'unexpected result: want={want} got={got}')
 
-    def test_packet_encode_and_decode(self):
+    def test_packet_decode_and_encode(self):
         """Verifies CSP packet encode and decode"""
-        ph = csp_packet.CSPPacketHeader(
-            priority=1,
-            destination=2,
-            destination_port=3,
-            source=4,
-            source_port=5
-        )
 
-        arg = csp_packet.CSPPacket(
-            header = ph,
-            data = bytearray(b'foobar')
-        )
+        bs = bytearray([0x48, 0x20, 0xC5, 0x00, 0x66, 0x6F, 0x6F, 0x62, 0x61, 0x72])
+        pkt = csp_packet.CSPPacket.from_bytes(bs)
 
-        got_bytes = arg.to_bytes()
-        pkt = csp_packet.CSPPacket(got_bytes)
+        got = pkt.to_bytes()
 
-        got = pkt.from_bytes(got_bytes)
-        want = arg
+        want = bytearray(b'H \xc5\x00foobar')
 
-        self.assertIsNone(got.err(), msg=f'got={got.header.destination}, error:{got.err()}')
+        self.assertIsNone(pkt.err(), msg=pkt.err())
         self.assertEqual(got, want, f'unexpected result: want={want} got={got}')

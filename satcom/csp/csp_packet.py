@@ -66,13 +66,13 @@ class CSPPacketHeader(BaseModel):
         bs = utils.pack_uint_big_endian(header)
 
         return bs
-    
+
     @classmethod
     def from_bytes(cls, bs: bytearray):
         """Hydrates the CSP packet header metadata from a bytearray"""
         if len(bs) != HEADER_LENGTH_BYTES:
             raise ValueError('unexpected header length')
-        
+
         hdr = utils.unpack_uint_big_endian(bs)
         offset = 0
         bitmask32 = 0xFFFFFFFF
@@ -121,13 +121,13 @@ class CSPPacket():
     def data(self):
         """Protects data from being modified after instantiation"""
         return self._data
-    
+
     def err(self):
         """Throws an error if any params are out of bounds"""
         if self.header.err() is not None:
             return self.header.err()
         return None
-    
+
     def _max_packet_length(self, max_data_size: int):
         """Returns the maximum possible packet size based on provided max data size"""
         return HEADER_LENGTH_BYTES + max_data_size
@@ -139,17 +139,17 @@ class CSPPacket():
     def to_bytes(self):
         """Encodes CSP packet and data into bytes"""
         buf = self._make_buffer(len(self.data))
-        buf = self.header.to_bytes()
+        buf[:HEADER_LENGTH_BYTES] = self.header.to_bytes()
         buf[HEADER_LENGTH_BYTES:] = self.data
 
         return buf
-    
+
     @classmethod
     def from_bytes(cls, bs: bytearray):
         """Hydrates the CSP packet object from provided byte array"""
         if len(bs) < HEADER_LENGTH_BYTES:
             raise ValueError('insufficient data')
-        
+
         hbs, dbs = bs[0:HEADER_LENGTH_BYTES], bs[HEADER_LENGTH_BYTES:]
         hdr = CSPPacketHeader.from_bytes(hbs)
 
@@ -159,7 +159,7 @@ class CSPPacket():
         )
 
         return obj
-    
+
     def write_packet(self):
         """Writes n bytes to CSP packet"""
         enc = self.to_bytes()
@@ -173,9 +173,9 @@ class CSPPacket():
 
         if n != enc_len:
             return ValueError(f'CSP wrote failed: want {enc_len} bytes, got {n}')
-        
+
         return None
-    
+
     def read_packet(self, buf: bytearray):
         """Reads CSP packet using supplied buffer"""
         src = BytesIO(buf)
@@ -183,7 +183,6 @@ class CSPPacket():
 
         if err is not None:
             return self.err()
-        
         buf = buf[:n]
 
         return self.from_bytes(buf)

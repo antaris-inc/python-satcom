@@ -38,3 +38,12 @@ class TestUtils(unittest.TestCase):
         got = utils.pack_uint_big_endian(val)
 
         self.assertEqual(got, want, f'unexpected result: want={want} got={got}')
+
+    def test_unpack_uint_big_endian(self):
+        """Verifies that an int is packed into a bytearray with big endian mapping"""
+        bs = bytearray([0xC0, 0x94, 0x6A, 0xDF])
+
+        want = 3230952159
+        got = utils.unpack_uint_big_endian(bs)
+
+        self.assertEqual(got, want, f'unexpected result: want={want} got={got}')        
