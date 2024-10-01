@@ -82,5 +82,4 @@ class TestClientPacket(unittest.TestCase):
         p = client_pkt_lib.ClientPacket(val)
         pkt = p.from_bytes(val)
 
-        self.assertIsNone(pkt.err(), msg=f'{pkt.header.length}')
-        self.assertEqual(len(pkt.data), 0, f'expected empty result, got {pkt.data}')
+        self.assertIsNotNone(pkt.err())

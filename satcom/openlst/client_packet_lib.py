@@ -15,8 +15,8 @@ class ClientPacketHeader(BaseModel):
 
     def err(self):
         """Throws an error if any params are out of bounds"""
-        if self.length < 6 or self.length > 251:
-            return ValueError('length must be 6-251')
+        if self.length < 7 or self.length > 251:
+            return ValueError('length must be 7-251')
         if self.hardware_id < 0 or self.hardware_id > 65535:
             return ValueError('hardware_id must be 0-65535')
         if self.sequence_number < 0 or self.sequence_number > 65535:
