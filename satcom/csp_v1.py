@@ -1,4 +1,3 @@
-from io import BytesIO
 from pydantic import BaseModel
 from satcom.utils import utils
 
@@ -65,7 +64,7 @@ class PacketHeader(BaseModel):
         bs = bytearray(HEADER_LENGTH_BYTES)
         bs = utils.pack_uint_big_endian(header)
 
-        return bs
+        return bytes(bs)
 
     @classmethod
     def from_bytes(cls, bs: bytes):
@@ -130,17 +129,17 @@ class Packet():
         """Returns the maximum possible packet size based on provided max data size"""
         return HEADER_LENGTH_BYTES + max_data_size
 
-    def _make_buffer(self, max_data_size: int):
+    def _make_buffer(self, max_data_size: int) -> bytes:
         """Initializes a new byte slice appropriate for a full CSP packet"""
-        return bytearray(self._max_packet_length(max_data_size))
+        return bytes(self._max_packet_length(max_data_size))
 
     def to_bytes(self) -> bytes:
         """Encodes CSP packet and data into bytes"""
-        buf = self._make_buffer(len(self.data))
+        buf = bytearray(self._make_buffer(len(self.data)))
         buf[:HEADER_LENGTH_BYTES] = self.header.to_bytes()
         buf[HEADER_LENGTH_BYTES:] = self.data
 
-        return buf
+        return bytes(buf)
 
     @classmethod
     def from_bytes(cls, bs: bytes):
