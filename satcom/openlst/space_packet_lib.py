@@ -1,11 +1,14 @@
-from satcom.utils import utils
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
-SPACE_PACKET_PREAMBLE = [0xAA, 0xAA, 0xAA, 0xAA]
-SPACE_PACKET_ASM = [0xD3, 0x91, 0xD3, 0x91]
+from satcom.utils import utils
+
+
+SPACE_PACKET_PREAMBLE = bytes([0xAA, 0xAA, 0xAA, 0xAA])
+SPACE_PACKET_ASM = bytes([0xD3, 0x91, 0xD3, 0x91])
+
 SPACE_PACKET_HEADER_LENGTH = 6
 SPACE_PACKET_FOOTER_LENGTH = 4
-CRC16_CHECKSUM_LENGTH_BYTES = 2
+
 
 class SpacePacketHeader(BaseModel):
     length: int = 0
@@ -16,8 +19,8 @@ class SpacePacketHeader(BaseModel):
 
     def err(self):
         """Throws an error if any params are out of bounds"""
-        if self.length < 9 or self.length > 251:
-            return ValueError('length must be 9-251')
+        if self.length < 10 or self.length > 254:
+            return ValueError('length must be 10-254')
         if self.sequence_number < 0 or self.sequence_number > 65535:
             return ValueError('sequence_number must be 0-65535')
         if self.destination < 0 or self.destination > 255:
@@ -26,8 +29,8 @@ class SpacePacketHeader(BaseModel):
             return ValueError('command_number must be 0-255')
         return None
 
-    def to_bytes(self) -> bytearray:
-        """Packs space packet header metadata into a bytearray"""
+    def to_bytes(self) -> bytes:
+        """Packs space packet header metadata into bytes"""
         bs = bytearray(SPACE_PACKET_HEADER_LENGTH)
 
         bs[0] = self.length
@@ -36,10 +39,10 @@ class SpacePacketHeader(BaseModel):
         bs[4] = self.destination
         bs[5] = self.command_number
 
-        return bs
+        return bytes(bs)
 
     @classmethod
-    def from_bytes(cls, bs: bytearray):
+    def from_bytes(cls, bs: bytes):
         """Unpacks space packet header metadata from bytes"""
         if len(bs) != SPACE_PACKET_HEADER_LENGTH:
             raise ValueError('unexpected header length')
@@ -55,11 +58,8 @@ class SpacePacketHeader(BaseModel):
         return obj
 
 class SpacePacketFooter(BaseModel):
-    # allow pydantic to use bytearray as a field type
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     hardware_id: int = 0
-    crc16_checksum: bytearray = []
+    crc16_checksum: bytes = []
 
     def err(self):
         """Throws an error if any fields are out of bounds"""
@@ -69,7 +69,7 @@ class SpacePacketFooter(BaseModel):
             return ValueError('crc16_checksum set incorrectly.')
         return None
 
-    def to_bytes(self) -> bytearray:
+    def to_bytes(self) -> bytes:
         """Packs space packet footer metadata into bytes"""
         bs = bytearray(SPACE_PACKET_FOOTER_LENGTH)
 
@@ -80,11 +80,11 @@ class SpacePacketFooter(BaseModel):
             bs[2] = self.crc16_checksum[1]
             bs[3] = self.crc16_checksum[0]
 
-        return bs
+        return bytes(bs)
 
     @classmethod
-    def from_bytes(cls, bs: bytearray):
-        """Unpack space packet footer from a bytearray"""
+    def from_bytes(cls, bs: bytes):
+        """Unpack space packet footer from bytes"""
         if len(bs) != SPACE_PACKET_FOOTER_LENGTH:
             return ValueError('unexpected footer length')
 
@@ -95,13 +95,13 @@ class SpacePacketFooter(BaseModel):
 
         obj = cls(
             hardware_id = utils.unpack_ushort_little_endian(bs[0:2]),
-            crc16_checksum = crc16_checksum
+            crc16_checksum = bytes(crc16_checksum)
         )
 
         return obj
 
 class SpacePacket():
-    def __init__(self, data: bytearray, header=None, footer=None):
+    def __init__(self, data: bytes, header=None, footer=None):
         self.header = header or SpacePacketHeader()
         self.header.length = SPACE_PACKET_HEADER_LENGTH + len(data) + SPACE_PACKET_FOOTER_LENGTH - 1
         self._data = data
@@ -120,8 +120,8 @@ class SpacePacket():
 
         if got[0] != want[0] or got[1] != want[1]:
             return ValueError(f'checksum mismatch: got={got} want={want}')
-        
-    def _make_packet_checksum(self) -> bytearray:
+
+    def _make_packet_checksum(self) -> bytes:
         """Creates checksum of packet from candidate bytes"""
         bs = self.to_bytes()
         inp = bs[0:len(bs)-2]
@@ -137,11 +137,10 @@ class SpacePacket():
                 b = b << 1
         ck = ck & 0xFFFF
 
-        ckb = bytearray(2)
-        ckb = utils.pack_ushort_big_endian(ck)
+        ckb = bytes(utils.pack_ushort_big_endian(ck))
 
         return ckb
-    
+
     def err(self):
         """Throws an error if any parameters are out of bounds"""
         if self.header.err() is not None:
@@ -154,17 +153,17 @@ class SpacePacket():
             return self._verify_crc16()
         return None
 
-    def to_bytes(self) -> bytearray:
+    def to_bytes(self) -> bytes:
         """Encodes space packet to byte slice, including header, data, and footer"""
         buf = bytearray(self.header.length)
 
         buf[:SPACE_PACKET_HEADER_LENGTH] = self.header.to_bytes()
         buf[SPACE_PACKET_HEADER_LENGTH:] = self.data
         buf[SPACE_PACKET_HEADER_LENGTH+len(self.data):] = self.footer.to_bytes()
-        return buf
+        return bytes(buf)
 
     @classmethod
-    def from_bytes(cls, bs: bytearray):
+    def from_bytes(cls, bs: bytes):
         """Hydrates the space packet from provided byte array, returning non-nil if errors are present"""
         if len(bs) < SPACE_PACKET_HEADER_LENGTH:
             return ValueError('insufficient data')
