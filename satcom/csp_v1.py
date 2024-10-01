@@ -38,7 +38,7 @@ class PacketHeader(BaseModel):
         return None
 
     def to_bytes(self) -> bytes:
-        """Packs CSP packet header metadata into a bytearray"""
+        """Packs CSP packet header metadata into a bytes"""
         header = 0
         cursor = 0
         bitmask32 = 0xFFFFFFFF
@@ -68,7 +68,7 @@ class PacketHeader(BaseModel):
 
     @classmethod
     def from_bytes(cls, bs: bytes):
-        """Hydrates the CSP packet header metadata from a bytearray"""
+        """Hydrates the CSP packet header metadata from a bytes"""
         if len(bs) != HEADER_LENGTH_BYTES:
             raise ValueError('unexpected header length')
 
@@ -143,7 +143,7 @@ class Packet():
 
     @classmethod
     def from_bytes(cls, bs: bytes):
-        """Hydrates the CSP packet object from provided byte array"""
+        """Hydrates the CSP packet object from provided bytes"""
         if len(bs) < HEADER_LENGTH_BYTES:
             raise ValueError('insufficient data')
 
