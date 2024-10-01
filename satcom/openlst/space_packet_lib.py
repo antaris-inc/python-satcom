@@ -19,8 +19,8 @@ class SpacePacketHeader(BaseModel):
 
     def err(self):
         """Throws an error if any params are out of bounds"""
-        if self.length < 9 or self.length > 251:
-            return ValueError('length must be 9-251')
+        if self.length < 10 or self.length > 254:
+            return ValueError('length must be 10-254')
         if self.sequence_number < 0 or self.sequence_number > 65535:
             return ValueError('sequence_number must be 0-65535')
         if self.destination < 0 or self.destination > 255:
