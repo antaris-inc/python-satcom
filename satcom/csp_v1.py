@@ -112,7 +112,7 @@ class PacketHeader(BaseModel):
         return obj
     
 class Packet():
-    def __init__(self, data: bytearray, header=None):
+    def __init__(self, data: bytes, header=None):
         self.header = header or PacketHeader()
         self._data = data
 
