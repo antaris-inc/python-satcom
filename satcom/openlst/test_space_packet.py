@@ -4,7 +4,7 @@ import satcom.openlst.space_packet_lib as space_pkt_lib
 class TestSpacePacket(unittest.TestCase):
 
     def test_space_packet_header_encode(self):
-        """Verifies ClientPacketHeader conversion to bytes"""
+        """Verifies SpacePacketHeader conversion to bytes"""
         ph = space_pkt_lib.SpacePacketHeader(
             length=27,
             port=0,
